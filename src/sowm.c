@@ -13,6 +13,8 @@
 #define LEN(x)    (sizeof(x) / sizeof(*x))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+static int id_to_window(xcb_window_t);
+
 static void action_center(const struct arg, xcb_window_t);
 static void action_execute(const struct arg a, xcb_window_t w);
 static void action_fullscreen(const struct arg, xcb_window_t);
@@ -38,8 +40,8 @@ static void init_desktops(void);
 xcb_connection_t *dpy;
 xcb_screen_t *scr;
 
-int current_desktop = 0;
-struct desktop **desktops;
+static int cur_ws = 0;
+static struct desktop **desktops;
 static xcb_window_t motion_win;
 
 void (*events[XCB_NO_OPERATION])(xcb_generic_event_t *) = {
@@ -52,9 +54,40 @@ void (*events[XCB_NO_OPERATION])(xcb_generic_event_t *) = {
     [XCB_MOTION_NOTIFY]  = event_notify_motion
 };
 
+static int id_to_window(xcb_window_t w) {
+    if (!w || w == scr->root) {
+        return -1;
+    }
+
+    for (unsigned int i = 0; i < vec_size(desktops[cur_ws]->windows); ++i) {
+        if (w == desktops[cur_ws]->windows[i].id) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 static void action_center(const struct arg a, xcb_window_t w) {
+    struct window win;
+    uint32_t values[2];
+    int wid;
+
     (void)(a);
-    (void)(w);
+
+    wid = id_to_window(w);
+
+    if (wid == -1) {
+        return;
+    }
+
+    win = desktops[cur_ws]->windows[wid];
+
+    values[0] = (scr->width_in_pixels - win.geom->width) / 2;
+    values[1] = (scr->height_in_pixels - win.geom->height) / 2;
+
+    xcb_configure_window(dpy, w,
+        XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
 }
 
 static void action_execute(const struct arg a, xcb_window_t w) {
@@ -69,8 +102,43 @@ static void action_execute(const struct arg a, xcb_window_t w) {
 }
 
 static void action_fullscreen(const struct arg a, xcb_window_t w) {
+    struct window *win;
+    uint32_t values[4];
+    int wid;
+
     (void)(a);
-    (void)(w);
+
+    if (w == scr->root) {
+        return;
+    }
+
+    wid = id_to_window(w);
+
+    if (wid == -1) {
+        return;
+    }
+
+    win = &desktops[cur_ws]->windows[wid];
+
+    if ((win->is_fs = win->is_fs ? 0 : 1)) {
+        values[0] = win->geom->x;
+        values[1] = win->geom->y;
+        values[2] = win->geom->width;
+        values[3] = win->geom->height;
+
+    } else {
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = scr->width_in_pixels;
+        values[3] = scr->height_in_pixels;
+
+        win->geom = xcb_get_geometry_reply(dpy, xcb_get_geometry(dpy, w), NULL);
+    }
+
+    xcb_configure_window(dpy, w,
+        XCB_CONFIG_WINDOW_X     | XCB_CONFIG_WINDOW_Y |
+        XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+        values);
 }
 
 static void action_kill(const struct arg a, xcb_window_t w) {
@@ -118,9 +186,17 @@ void event_button_press(xcb_generic_event_t *ev) {
 }
 
 void event_button_release(xcb_generic_event_t *ev) {
+    int wid;
+
     (void)(ev);
 
     xcb_ungrab_pointer(dpy, XCB_CURRENT_TIME);
+
+    wid = id_to_window(motion_win);
+
+    desktops[cur_ws]->windows[wid].geom =
+        xcb_get_geometry_reply(dpy,
+            xcb_get_geometry(dpy, motion_win), NULL);
 
     motion_win = 0;
 }
@@ -153,6 +229,13 @@ void event_notify_create(xcb_generic_event_t *ev) {
     xcb_create_notify_event_t *e = (xcb_create_notify_event_t *)ev;
     uint32_t value;
 
+    struct window new = {
+        .id    = e->window,
+        .is_fs = 1,
+        .geom  = xcb_get_geometry_reply(dpy,
+                     xcb_get_geometry(dpy, e->window), NULL),
+    };
+
     value = XCB_EVENT_MASK_ENTER_WINDOW |
             XCB_EVENT_MASK_FOCUS_CHANGE |
             XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
@@ -163,15 +246,16 @@ void event_notify_create(xcb_generic_event_t *ev) {
     xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT,
         e->window, XCB_CURRENT_TIME);
 
-    vec_push_back(desktops[current_desktop]->windows, e->window);
+    vec_push_back(desktops[cur_ws]->windows, new);
+    action_center((struct arg){0}, e->window);
 }
 
 void event_notify_destroy(xcb_generic_event_t *ev) {
     xcb_destroy_notify_event_t *e = (xcb_destroy_notify_event_t *)ev;
 
-    for (size_t i = 0; i < vec_size(desktops[current_desktop]->windows); ++i) {
-        if (e->window == desktops[current_desktop]->windows[i]) {
-            vec_erase(desktops[current_desktop]->windows, i);
+    for (size_t i = 0; i < vec_size(desktops[cur_ws]->windows); ++i) {
+        if (e->window == desktops[cur_ws]->windows[i].id) {
+            vec_erase(desktops[cur_ws]->windows, i);
         }
     }
 }

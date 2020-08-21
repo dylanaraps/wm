@@ -1,7 +1,13 @@
 #include <xcb/xcb.h>
 
+struct window {
+    xcb_window_t id;
+    xcb_get_geometry_reply_t *geom;
+    int is_fs;
+};
+
 struct desktop {
-    xcb_window_t *windows;
+    struct window *windows;
     int num;
 };
 
