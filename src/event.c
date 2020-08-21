@@ -1,6 +1,7 @@
 #include <xcb/xcb.h>
 
 #include "globals.h"
+#include "vec.h"
 #include "event.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -73,6 +74,8 @@ void event_notify_create(xcb_generic_event_t *ev) {
 
     xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT,
         e->window, XCB_CURRENT_TIME);
+
+    vec_push_back(desktops[current_desktop]->windows, &e->window);
 }
 
 /* void event_notify_destroy(xcb_generic_event_t *ev) { */

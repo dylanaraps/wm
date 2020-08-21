@@ -2,7 +2,6 @@
 
 extern xcb_connection_t *dpy;
 extern xcb_screen_t *scr;
-extern int current_desktop;
 
 struct desktop {
     xcb_window_t **windows;
@@ -20,3 +19,6 @@ struct key {
     void (*func)(const union arg *);
     const union arg a;
 };
+
+extern int current_desktop;
+extern struct desktop **desktops;

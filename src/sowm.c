@@ -21,7 +21,7 @@ static void init_desktops(void);
 xcb_connection_t *dpy;
 xcb_screen_t *scr;
 
-struct desktop *desktops;
+struct desktop **desktops;
 int current_desktop = 0;
 
 static void init_wm() {
@@ -99,11 +99,8 @@ static void init_desktops() {
 
     for (int i = 0; i < SOWM_NUM_DESKTOPS; i++) {
         new.num = i;
-        vec_push_back(desktops, new);
+        vec_push_back(desktops, &new);
     }
-
-    /* todo finish usage of desktops */
-    vec_free(desktops);
 }
 
 int main(int argc, char **argv) {
@@ -130,6 +127,9 @@ int main(int argc, char **argv) {
 
         free(ev);
     }
+
+    /* todo atexit or something */
+    vec_free(desktops);
 
     return 0;
 }
