@@ -8,8 +8,8 @@ ALL_LDFLAGS = $(LDFLAGS) $(LIBS) -lxcb -lxcb-keysyms
 
 CC = cc
 
-OBJ = src/action.o src/event.o src/sowm.o
-HDR = src/action.h src/event.h src/globals.h
+OBJ = src/sowm.o
+HDR =
 
 .c.o:
 	$(CC) $(ALL_CFLAGS) -c -o $@ $<
@@ -27,6 +27,6 @@ uninstall:
 	rm -f $(DESTDIR)/bin/sowm
 
 clean:
-	rm -f sowm *.o
+	rm -f sowm src/*.o
 
 .PHONY: install uninstall clean
