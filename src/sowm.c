@@ -16,6 +16,8 @@ static void init_mouse(void);
 static void init_keys(void);
 static void init_desktops(void);
 
+#define LEN(x) (sizeof(x) / sizeof(*x))
+
 xcb_connection_t *dpy;
 xcb_screen_t *scr;
 
@@ -65,8 +67,29 @@ static void init_mouse() {
 
 static void init_keys() {
     xcb_key_symbols_t *keysyms;
+    xcb_keycode_t *keycode;
+
+    xcb_ungrab_key(dpy, XCB_GRAB_ANY, scr->root, XCB_MOD_MASK_ANY);
 
     keysyms = xcb_key_symbols_alloc(dpy);
+
+    if (!keysyms) {
+        printf("error: Failed to grab keyboard\n");
+        xcb_disconnect(dpy);
+        exit(1);
+    }
+
+    for (int i = 0; i < LEN(keys); i++) {
+        keycode = xcb_key_symbols_get_keycode(keysyms, keys[i].keysym);
+
+        /* todo handle numlock etc fuck me */
+        for (int j = 0; keycode[j] != XCB_NO_SYMBOL; j++) {
+            xcb_grab_key(dpy, 1, scr->root, keys[i].mod, keycode[j],
+                XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
+        }
+
+        free(keycode);
+    }
 
     xcb_key_symbols_free(keysyms);
 }
