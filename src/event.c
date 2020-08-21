@@ -14,7 +14,7 @@ void (*events[XCB_NO_OPERATION])(xcb_generic_event_t *) = {
     /* [XCB_CONFIGURE_REQUEST] = event_configure_request, */
     /* [XCB_KEY_PRESS]         = event_key_press, */
     [XCB_CREATE_NOTIFY]     = event_notify_create,
-    /* [XCB_DESTROY_NOTIFY]    = event_notify_destroy, */
+    [XCB_DESTROY_NOTIFY]    = event_notify_destroy,
     [XCB_ENTER_NOTIFY]      = event_notify_enter,
     [XCB_MOTION_NOTIFY]     = event_notify_motion
 };
@@ -49,7 +49,9 @@ void event_button_press(xcb_generic_event_t *ev) {
 
 void event_button_release(xcb_generic_event_t *ev) {
     (void)(ev);
+
     xcb_ungrab_pointer(dpy, XCB_CURRENT_TIME);
+
     motion_win = 0;
 }
 
@@ -75,12 +77,18 @@ void event_notify_create(xcb_generic_event_t *ev) {
     xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT,
         e->window, XCB_CURRENT_TIME);
 
-    vec_push_back(desktops[current_desktop]->windows, &e->window);
+    vec_push_back(desktops[current_desktop]->windows, e->window);
 }
 
-/* void event_notify_destroy(xcb_generic_event_t *ev) { */
+void event_notify_destroy(xcb_generic_event_t *ev) {
+    xcb_destroy_notify_event_t *e = (xcb_destroy_notify_event_t *)ev;
 
-/* } */
+    for (size_t i = 0; i < vec_size(desktops[current_desktop]->windows); ++i) {
+        if (e->window == desktops[current_desktop]->windows[i]) {
+            vec_erase(desktops[current_desktop]->windows, i);
+        }
+    }
+}
 
 void event_notify_enter(xcb_generic_event_t *ev) {
     xcb_enter_notify_event_t *e = (xcb_enter_notify_event_t *)ev;
