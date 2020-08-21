@@ -79,7 +79,7 @@ static void init_keys() {
         exit(1);
     }
 
-    for (int i = 0; i < LEN(keys); i++) {
+    for (unsigned int i = 0; i < LEN(keys); i++) {
         keycode = xcb_key_symbols_get_keycode(keysyms, keys[i].keysym);
 
         /* todo handle numlock etc fuck me */
