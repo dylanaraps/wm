@@ -4,6 +4,8 @@
 #define SOWM_MOD XCB_MOD_MASK_1
 #define SOWM_NUM_DESKTOPS 6
 
+const char* term[] = {"st", 0};
+
 struct key keys[] = {
     {SOWM_MOD, XK_q, action_kill,       {0}},
     {SOWM_MOD, XK_c, action_center,     {0}},
@@ -11,8 +13,7 @@ struct key keys[] = {
 
     {XCB_MOD_MASK_1, XK_Tab, NULL, {0}},
 
-    /* todo run commands */
-    /* {SOWM_MOD, XK_Return, NULL, {.cmd = {"st", 0}}}, */
+    {SOWM_MOD, XK_Return, action_execute, {.cmd = term}},
 
     {SOWM_MOD,                    XK_1, action_workspace,      {.i = 1}},
     {SOWM_MOD|XCB_MOD_MASK_SHIFT, XK_1, action_workspace_send, {.i = 1}},

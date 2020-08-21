@@ -5,7 +5,7 @@ struct desktop {
     int num;
 };
 
-union arg {
+struct arg {
     const char **cmd;
     const uint32_t i;
 };
@@ -13,6 +13,6 @@ union arg {
 struct key {
     unsigned int mod;
     xcb_keysym_t keysym;
-    void (*func)(const union arg *, xcb_window_t);
-    const union arg a;
+    void (*func)(const struct arg, xcb_window_t);
+    const struct arg a;
 };

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include <xcb/xcb.h>
 #include <xcb/xcb_keysyms.h>
@@ -12,11 +13,12 @@
 #define LEN(x)    (sizeof(x) / sizeof(*x))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-static void action_center(const union arg, xcb_window_t);
-static void action_fullscreen(const union arg, xcb_window_t);
-static void action_kill(const union arg, xcb_window_t);
-static void action_workspace(const union arg, xcb_window_t);
-static void action_workspace_send(const union arg, xcb_window_t);
+static void action_center(const struct arg, xcb_window_t);
+static void action_execute(const struct arg a, xcb_window_t w);
+static void action_fullscreen(const struct arg, xcb_window_t);
+static void action_kill(const struct arg, xcb_window_t);
+static void action_workspace(const struct arg, xcb_window_t);
+static void action_workspace_send(const struct arg, xcb_window_t);
 
 static void event_button_press(xcb_generic_event_t *ev);
 static void event_button_release(xcb_generic_event_t *ev);
@@ -50,24 +52,41 @@ void (*events[XCB_NO_OPERATION])(xcb_generic_event_t *) = {
     [XCB_MOTION_NOTIFY]  = event_notify_motion
 };
 
-static void action_center(const union arg a, xcb_window_t w) {
-
+static void action_center(const struct arg a, xcb_window_t w) {
+    (void)(a);
+    (void)(w);
 }
 
-static void action_fullscreen(const union arg a, xcb_window_t w) {
+static void action_execute(const struct arg a, xcb_window_t w) {
+    (void)(w);
 
+    if (fork()) {
+        return;
+    }
+
+    setsid();
+    execvp((char *)a.cmd[0], (char **)a.cmd);
 }
 
-static void action_kill(const union arg a, xcb_window_t w) {
+static void action_fullscreen(const struct arg a, xcb_window_t w) {
+    (void)(a);
+    (void)(w);
+}
+
+static void action_kill(const struct arg a, xcb_window_t w) {
+    (void)(a);
+
     xcb_destroy_window(dpy, w);
 }
 
-static void action_workspace(const union arg a, xcb_window_t w) {
-
+static void action_workspace(const struct arg a, xcb_window_t w) {
+    (void)(a);
+    (void)(w);
 }
 
-static void action_workspace_send(const union arg a, xcb_window_t w) {
-
+static void action_workspace_send(const struct arg a, xcb_window_t w) {
+    (void)(a);
+    (void)(w);
 }
 
 void event_button_press(xcb_generic_event_t *ev) {
@@ -122,7 +141,7 @@ void event_key_press(xcb_generic_event_t *ev) {
     /* todo mask crap */
     for (unsigned int i = 0; i < LEN(keys); i++) {
         if (keysym == keys[i].keysym && keys[i].func) {
-            keys[i].func(&keys[i].a, e->child);
+            keys[i].func(keys[i].a, e->child);
             break;
         }
     }
