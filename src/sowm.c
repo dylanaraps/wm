@@ -128,7 +128,10 @@ int main(int argc, char **argv) {
         free(ev);
     }
 
-    /* todo atexit or something */
+    /* todo atexit + destroy func */
+    for (int i = 0; i < SOWM_NUM_DESKTOPS; i++) {
+        vec_free(desktops[i]->windows);
+    }
     vec_free(desktops);
 
     return 0;
