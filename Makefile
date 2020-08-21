@@ -4,7 +4,7 @@ PREFIX = /usr/local
 
 ALL_WARN    = -Wall -Wextra -pedantic -Wmissing-prototypes -Wstrict-prototypes
 ALL_CFLAGS  = $(CFLAGS) $(CPPFLAGS) -std=c99 $(ALL_WARN)
-ALL_LDFLAGS = $(LDFLAGS) $(LIBS) -lxcb
+ALL_LDFLAGS = $(LDFLAGS) $(LIBS) -lxcb -lxcb-keysyms
 
 CC = cc
 

@@ -3,6 +3,8 @@
 #include <signal.h>
 
 #include <xcb/xcb.h>
+#include <xcb/xcb_keysyms.h>
+#include <X11/keysym.h>
 
 #include "event.h"
 #include "vec.h"
@@ -10,7 +12,8 @@
 #include "config.h"
 
 static void init_wm(void);
-static void init_input(void);
+static void init_mouse(void);
+static void init_keys(void);
 static void init_desktops(void);
 
 xcb_connection_t *dpy;
@@ -45,7 +48,7 @@ static void init_wm() {
     xcb_flush(dpy);
 }
 
-static void init_input() {
+static void init_mouse() {
     xcb_grab_key(dpy, 1, scr->root, SOWM_MOD, XCB_NO_SYMBOL,
         XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
 
@@ -58,6 +61,14 @@ static void init_input() {
         XCB_GRAB_MODE_ASYNC, scr->root, XCB_NONE, 3, SOWM_MOD);
 
     xcb_flush(dpy);
+}
+
+static void init_keys() {
+    xcb_key_symbols_t *keysyms;
+
+    keysyms = xcb_key_symbols_alloc(dpy);
+
+    xcb_key_symbols_free(keysyms);
 }
 
 static void init_desktops() {
@@ -82,7 +93,8 @@ int main(int argc, char **argv) {
     signal(SIGCHLD, SIG_IGN);
 
     init_wm();
-    init_input();
+    init_mouse();
+    init_keys();
     init_desktops();
 
     while ((ev = xcb_wait_for_event(dpy))) {
