@@ -1,8 +1,6 @@
 #include <xcb/xcb.h>
 #include <X11/keysym.h>
 
-#include "globals.h"
-
 #define SOWM_MOD XCB_MOD_MASK_1
 #define SOWM_NUM_DESKTOPS 6
 
