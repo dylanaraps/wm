@@ -13,6 +13,6 @@ union arg {
 struct key {
     unsigned int mod;
     xcb_keysym_t keysym;
-    void (*func)(const union arg *);
+    void (*func)(const union arg *, xcb_window_t);
     const union arg a;
 };
